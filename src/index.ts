@@ -15,9 +15,19 @@ async function main() {
     await runMigrations();
     console.log("Migrations applied successfully");
 
-    app.listen(config.port, () => {
+    const server = app.listen(config.port, () => {
       console.log(`Rate limiter service running on port ${config.port}`);
     });
+
+    const shutdown = async (signal: string) => {
+      console.log(`\nReceived ${signal}, shutting down gracefully...`);
+      server.close();
+      await pool.end();
+      process.exit(0);
+    };
+
+    process.on("SIGTERM", () => shutdown("SIGTERM"));
+    process.on("SIGINT", () => shutdown("SIGINT"));
   } catch (err) {
     console.error("Failed to start server:", err);
     process.exit(1);
